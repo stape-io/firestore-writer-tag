@@ -88,6 +88,13 @@ ___TEMPLATE_PARAMETERS___
     "help": "This option will add the millisecond timestamp to the document."
   },
   {
+    "type": "CHECKBOX",
+    "name": "skipNilValues",
+    "checkboxText": "Skip null or undefined values",
+    "simpleValueType": true,
+    "help": "This option allows skipping items from customDataList with undefined or null values."
+  },
+  {
     "type": "TEXT",
     "name": "timestampFieldName",
     "displayName": "Timestamp field name",
@@ -186,6 +193,7 @@ const getAllEventData = require('getAllEventData');
 const getTimestampMillis = require('getTimestampMillis');
 const logToConsole = require('logToConsole');
 const getContainerVersion = require('getContainerVersion');
+const getType = require('getType');
 const containerVersion = getContainerVersion();
 const isDebug = containerVersion.debugMode;
 const isLoggingEnabled = determinateIsLoggingEnabled();
@@ -193,14 +201,18 @@ const traceId = getRequestHeader('trace-id');
 
 let input = data.addEventData ? getAllEventData() : {};
 
-let options = { merge: data.firebaseMerge ? true : false };
+let options = { merge: !!data.firebaseMerge };
 if (data.firebaseProjectIdOverride) options.projectId = data.firebaseProjectId;
 
 if (data.addTimestamp) input[data.timestampFieldName] = getTimestampMillis();
 if (data.customDataList) {
-    data.customDataList.forEach((d) => {
-        input[d.name] = d.value;
-    });
+  data.customDataList.forEach((d) => {
+    if (data.skipNilValues) {
+      const dType = getType(d.value);
+      if (dType === 'undefined' || dType === 'null') return;
+    }
+    input[d.name] = d.value;
+  });
 }
 
 Firestore.write(data.firebasePath, input, options).then((id) => {
@@ -235,6 +247,7 @@ function determinateIsLoggingEnabled() {
 
   return data.logType === 'always';
 }
+
 
 ___SERVER_PERMISSIONS___
 
