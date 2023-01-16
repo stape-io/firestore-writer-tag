@@ -1,4 +1,6 @@
 homepage: "https://stape.io/"
 versions:
+  - sha: 2ec7ea4fa4eb3900de98309fb99acb0f760e8b8a
+    changeNotes: Added ability to skip null or undefined values.
   - sha: 31763d12929728d89a0ba28c1d6569b400b3c316
     changeNotes: Initial release.

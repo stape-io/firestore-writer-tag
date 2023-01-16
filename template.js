@@ -5,6 +5,7 @@ const getAllEventData = require('getAllEventData');
 const getTimestampMillis = require('getTimestampMillis');
 const logToConsole = require('logToConsole');
 const getContainerVersion = require('getContainerVersion');
+const getType = require('getType');
 const containerVersion = getContainerVersion();
 const isDebug = containerVersion.debugMode;
 const isLoggingEnabled = determinateIsLoggingEnabled();
@@ -12,12 +13,16 @@ const traceId = getRequestHeader('trace-id');
 
 let input = data.addEventData ? getAllEventData() : {};
 
-let options = { merge: data.firebaseMerge ? true : false };
+let options = { merge: !!data.firebaseMerge };
 if (data.firebaseProjectIdOverride) options.projectId = data.firebaseProjectId;
 
 if (data.addTimestamp) input[data.timestampFieldName] = getTimestampMillis();
 if (data.customDataList) {
   data.customDataList.forEach((d) => {
+    if (data.skipNilValues) {
+      const dType = getType(d.value);
+      if (dType === 'undefined' || dType === 'null') return;
+    }
     input[d.name] = d.value;
   });
 }
