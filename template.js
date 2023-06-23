@@ -23,7 +23,22 @@ if (data.customDataList) {
       const dType = getType(d.value);
       if (dType === 'undefined' || dType === 'null') return;
     }
-    input[d.name] = d.value;
+    if (d.name.indexOf('.') != -1) {
+      const nameParts = d.name.split('.');
+      let obj = {};
+      for (let i = 1; i < nameParts.length; i++) {
+        let part_n = i + 1;
+        if (part_n != nameParts.length) {
+          obj[nameParts[i]] = {};
+        } else {
+          obj[nameParts[i]] = d.value;
+        }
+        obj = obj[nameParts[i]];
+      }
+      input[nameParts[0]] = obj;
+    } else {
+      input[d.name] = d.value;
+    }
   });
 }
 
