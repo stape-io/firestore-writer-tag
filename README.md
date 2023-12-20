@@ -18,6 +18,11 @@ Firestore Writer tag allows recording data from server Google Tag Manager to Fir
 
 - [Write data to Firestore from server Google Tag Manager](https://stape.io/blog/write-data-to-firestore-from-server-google-tag-manager)
 
+### Useful links: 
+
+- https://stape.io/solutions/firestore-writer-tag
+- https://stape.io/blog/write-data-to-firestore-from-server-google-tag-manager 
+
 ## Open Source
 
 Firestore Writer Tag for GTM Server Side is developed and maintained by [Stape Team](https://stape.io/) under the Apache 2.0 license.
