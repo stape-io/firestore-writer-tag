@@ -152,52 +152,16 @@ ___TEMPLATE_PARAMETERS___
         "newRowButtonText": "Add property"
       }
     ]
-  },
-  {
-    "displayName": "Logs Settings",
-    "name": "logsGroup",
-    "groupStyle": "ZIPPY_CLOSED",
-    "type": "GROUP",
-    "subParams": [
-      {
-        "type": "RADIO",
-        "name": "logType",
-        "radioItems": [
-          {
-            "value": "no",
-            "displayValue": "Do not log"
-          },
-          {
-            "value": "debug",
-            "displayValue": "Log to console during debug and preview"
-          },
-          {
-            "value": "always",
-            "displayValue": "Always log to console"
-          }
-        ],
-        "simpleValueType": true,
-        "defaultValue": "debug"
-      }
-    ]
   }
 ]
 
 
 ___SANDBOXED_JS_FOR_SERVER___
 
-const JSON = require('JSON');
 const Firestore = require('Firestore');
-const getRequestHeader = require('getRequestHeader');
 const getAllEventData = require('getAllEventData');
 const getTimestampMillis = require('getTimestampMillis');
-const logToConsole = require('logToConsole');
-const getContainerVersion = require('getContainerVersion');
 const getType = require('getType');
-const containerVersion = getContainerVersion();
-const isDebug = containerVersion.debugMode;
-const isLoggingEnabled = determinateIsLoggingEnabled();
-const traceId = getRequestHeader('trace-id');
 
 let input = data.addEventData ? getAllEventData() : {};
 
@@ -229,128 +193,13 @@ if (data.customDataList) {
 }
 
 Firestore.write(data.firebasePath, input, options).then((id) => {
-  if (isLoggingEnabled) {
-    logToConsole(
-      JSON.stringify({
-        Name: 'Firestore',
-        Type: 'Message',
-        TraceId: traceId,
-        EventName: 'Write',
-        DocumentId: id,
-        DocumentInput: input,
-      })
-    );
-  }
-
   data.gtmOnSuccess();
 }, data.gtmOnFailure);
-
-function determinateIsLoggingEnabled() {
-  if (!data.logType) {
-    return isDebug;
-  }
-
-  if (data.logType === 'no') {
-    return false;
-  }
-
-  if (data.logType === 'debug') {
-    return isDebug;
-  }
-
-  return data.logType === 'always';
-}
 
 
 ___SERVER_PERMISSIONS___
 
 [
-  {
-    "instance": {
-      "key": {
-        "publicId": "read_request",
-        "versionId": "1"
-      },
-      "param": [
-        {
-          "key": "headerWhitelist",
-          "value": {
-            "type": 2,
-            "listItem": [
-              {
-                "type": 3,
-                "mapKey": [
-                  {
-                    "type": 1,
-                    "string": "headerName"
-                  }
-                ],
-                "mapValue": [
-                  {
-                    "type": 1,
-                    "string": "trace-id"
-                  }
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "key": "headersAllowed",
-          "value": {
-            "type": 8,
-            "boolean": true
-          }
-        },
-        {
-          "key": "requestAccess",
-          "value": {
-            "type": 1,
-            "string": "specific"
-          }
-        },
-        {
-          "key": "headerAccess",
-          "value": {
-            "type": 1,
-            "string": "specific"
-          }
-        },
-        {
-          "key": "queryParameterAccess",
-          "value": {
-            "type": 1,
-            "string": "any"
-          }
-        }
-      ]
-    },
-    "clientAnnotations": {
-      "isEditedByUser": true
-    },
-    "isRequired": true
-  },
-  {
-    "instance": {
-      "key": {
-        "publicId": "logging",
-        "versionId": "1"
-      },
-      "param": [
-        {
-          "key": "environments",
-          "value": {
-            "type": 1,
-            "string": "all"
-          }
-        }
-      ]
-    },
-    "clientAnnotations": {
-      "isEditedByUser": true
-    },
-    "isRequired": true
-  },
   {
     "instance": {
       "key": {
@@ -377,6 +226,10 @@ ___SERVER_PERMISSIONS___
                   {
                     "type": 1,
                     "string": "operation"
+                  },
+                  {
+                    "type": 1,
+                    "string": "databaseId"
                   }
                 ],
                 "mapValue": [
@@ -391,6 +244,10 @@ ___SERVER_PERMISSIONS___
                   {
                     "type": 1,
                     "string": "write"
+                  },
+                  {
+                    "type": 1,
+                    "string": "(default)"
                   }
                 ]
               }
@@ -401,16 +258,6 @@ ___SERVER_PERMISSIONS___
     },
     "clientAnnotations": {
       "isEditedByUser": true
-    },
-    "isRequired": true
-  },
-  {
-    "instance": {
-      "key": {
-        "publicId": "read_container_data",
-        "versionId": "1"
-      },
-      "param": []
     },
     "isRequired": true
   },
@@ -445,6 +292,9 @@ scenarios: []
 
 ___NOTES___
 
-Created on 23/04/2022, 12:40:30
+2026-05-25 Change Notes:
+ - Logging removal.
 
+
+Created on 23/04/2022, 12:40:30
 
