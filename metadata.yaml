@@ -1,5 +1,8 @@
-homepage: "https://stape.io/"
+homepage: 'https://stape.io/'
+documentation: 'https://github.com/stape-io/firestore-writer-tag'
 versions:
+  - sha: a88e2e75c10632d59fb7394be2ef6214f7c8ed31
+    changeNotes: Logging removal.
   - sha: ea98946f76d74114bcd184bea9bb8ec56430e33c
     changeNotes: Added ability to use inner objects in customDataList.
   - sha: 2ec7ea4fa4eb3900de98309fb99acb0f760e8b8a

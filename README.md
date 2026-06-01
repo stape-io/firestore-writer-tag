@@ -14,14 +14,14 @@ Firestore Writer tag allows recording data from server Google Tag Manager to Fir
 - [Google Service Account](https://stape.io/blog/write-data-to-firestore-from-server-google-tag-manager#1-google-service-account-connected-to-stape)
 - [Firebase account](https://stape.io/blog/write-data-to-firestore-from-server-google-tag-manager#2-firebase-account)
 
-### How to use Google Sheet tag
+### How to use Firestore Writer tag
 
 - [Write data to Firestore from server Google Tag Manager](https://stape.io/blog/write-data-to-firestore-from-server-google-tag-manager)
 
-### Useful links: 
+### Useful Resources
 
 - https://stape.io/solutions/firestore-writer-tag
-- https://stape.io/blog/write-data-to-firestore-from-server-google-tag-manager 
+- https://stape.io/blog/write-data-to-firestore-from-server-google-tag-manager
 
 ## Open Source
 
