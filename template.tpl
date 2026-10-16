@@ -34,7 +34,7 @@ ___TEMPLATE_PARAMETERS___
     "name": "firebasePath",
     "displayName": "Firebase Path",
     "simpleValueType": true,
-    "help": "The path to the document or collection. Must not start or end with a \u0027/\u0027.  If the path is to a collection, a document will be created with a randomly generated ID. If the path is to a document and it does not exist, it will be created.",
+    "help": "Path to the Firestore \u003cb\u003edocument\u003c/b\u003e or \u003cb\u003ecollection\u003c/b\u003e to write to. Must not start or end with a \u003ci\u003e/\u003c/i\u003e.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cul\u003e\n\u003cli\u003e\u003cb\u003eCollection path\u003c/b\u003e (odd number of segments, e.g. \u003ci\u003eusers\u003c/i\u003e or \u003ci\u003eusers/123/orders\u003c/i\u003e): a new document with a randomly generated ID is created.\u003c/li\u003e\n\u003cli\u003e\u003cb\u003eDocument path\u003c/b\u003e (even number of segments, e.g. \u003ci\u003eusers/123\u003c/i\u003e): the document is created if it doesn\u0027t exist. If it exists, it\u0027s overwritten or merged (see \u003ci\u003eMerge document keys\u003c/i\u003e).\u003c/li\u003e\n\u003c/ul\u003e",
     "valueValidators": [
       {
         "type": "NON_EMPTY"
@@ -46,37 +46,158 @@ ___TEMPLATE_PARAMETERS___
     "name": "addEventData",
     "checkboxText": "Add Event Data",
     "simpleValueType": true,
-    "help": "Add all Event Data to the document. If Event Data and Custom Data have the same field, the Custom Data value will be used for that field. In other words, you can override Event Data values with Custom Data."
+    "help": "Adds all the \u003cb\u003eEvent Data\u003c/b\u003e of the current event to the document.\n\u003cbr/\u003e\u003cbr/\u003e\nWhen fields have the same name, the value is taken from, in this order of precedence:\n\u003col\u003e\n\u003cli\u003e\u003ci\u003eTTL field\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003e\u003ci\u003eCustom Data\u003c/i\u003e\u003c/li\u003e\n\u003cli\u003e\u003ci\u003eTimestamp\u003c/i\u003e field\u003c/li\u003e\n\u003cli\u003e\u003ci\u003eEvent Data\u003c/i\u003e\u003c/li\u003e\n\u003c/ol\u003e"
   },
   {
     "type": "CHECKBOX",
     "name": "firebaseMerge",
     "checkboxText": "Merge document keys",
     "simpleValueType": true,
-    "help": "If checked then merge the keys from the input into the document, otherwise the method will override the whole document."
+    "help": "If \u003cb\u003echecked\u003c/b\u003e, only the top-level fields written by this tag are updated. Other fields already in the document are kept. If there are no fields to write, the document is left unchanged.\n\u003cbr/\u003e\nIf \u003cb\u003eunchecked\u003c/b\u003e, the whole document is overwritten.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eNote:\u003c/b\u003e nested fields (maps) are replaced as a whole, not deep-merged. E.g. writing \u003ci\u003euser.name\u003c/i\u003e replaces the entire \u003ci\u003euser\u003c/i\u003e field.\n\u003cbr/\u003e\u003cbr/\u003e\nOnly applies to document paths. Collection paths always create a new document."
   },
   {
     "type": "CHECKBOX",
     "name": "firebaseProjectIdOverride",
-    "checkboxText": "Override Firebase Project ID",
+    "checkboxText": "Override GCP Project ID",
     "simpleValueType": true,
-    "help": "The projectId is retrieved from the environment variable GOOGLE_CLOUD_PROJECT as long as the access_firestore permission setting for the project ID is set to * or GOOGLE_CLOUD_PROJECT. If the server container is running on Google Cloud, GOOGLE_CLOUD_PROJECT will already be set to the Google Cloud project\u0027s ID."
+    "help": "By default, the Google Cloud (GCP) project ID is taken from the \u003ci\u003eGOOGLE_CLOUD_PROJECT\u003c/i\u003e environment variable of the server container. If the container runs on Google Cloud, it\u0027s already set.\n\u003cbr/\u003e\u003cbr/\u003e\nCheck this to write to a different GCP project.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eNote:\u003c/b\u003e when \u003ci\u003eUse custom database\u003c/i\u003e or \u003ci\u003eAdd TTL field\u003c/i\u003e is enabled, the \u003cb\u003eGCP Project ID\u003c/b\u003e field is shown and required regardless of this checkbox."
   },
   {
     "type": "TEXT",
     "name": "firebaseProjectId",
-    "displayName": "Firebase Project ID",
+    "displayName": "GCP Project ID",
     "simpleValueType": true,
+    "help": "ID of the Google Cloud (GCP) project that contains the Firestore database, e.g. \u003ci\u003emy-project-123\u003c/i\u003e. It\u0027s the same as the Firebase project ID.\n\u003cbr/\u003e\u003cbr/\u003e\nUse the project \u003cb\u003eID\u003c/b\u003e, not the project name or number. You can find it in the \u003ca href\u003d\"https://console.cloud.google.com/home/dashboard\"\u003eGoogle Cloud console\u003c/a\u003e dashboard or in the Firebase console under \u003ci\u003eProject settings\u003c/i\u003e.",
     "enablingConditions": [
       {
         "paramName": "firebaseProjectIdOverride",
+        "paramValue": true,
+        "type": "EQUALS"
+      },
+      {
+        "paramName": "useCustomDatabase",
+        "paramValue": true,
+        "type": "EQUALS"
+      },
+      {
+        "paramName": "useTtl",
         "paramValue": true,
         "type": "EQUALS"
       }
     ],
     "valueValidators": [
       {
-        "type": "NON_EMPTY"
+        "type": "NON_EMPTY",
+        "enablingConditions": [
+          {
+            "paramName": "firebaseProjectIdOverride",
+            "paramValue": true,
+            "type": "EQUALS"
+          },
+          {
+            "paramName": "useCustomDatabase",
+            "paramValue": true,
+            "type": "EQUALS"
+          },
+          {
+            "paramName": "useTtl",
+            "paramValue": true,
+            "type": "EQUALS"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "CHECKBOX",
+    "name": "useCustomDatabase",
+    "checkboxText": "Use custom database",
+    "simpleValueType": true,
+    "help": "Write to a named Firestore database instead of the \u003ci\u003e(default)\u003c/i\u003e one.\n\u003cbr/\u003e\u003cbr/\u003e\nThe \u003ca href\u003d\"https://developers.google.com/tag-platform/tag-manager/server-side/api#firestore\"\u003ebuilt-in \u003ci\u003eFirestore\u003c/i\u003e API\u003c/a\u003e only supports the default database, so enabling this sends the request through the \u003ca href\u003d\"https://firebase.google.com/docs/firestore/use-rest-api\"\u003eFirestore REST API\u003c/a\u003e instead. It uses the same Google credentials as the built-in API.\n\u003cbr/\u003e\u003cbr/\u003e\nRequires the \u003cb\u003eGCP Project ID\u003c/b\u003e field.",
+    "subParams": [
+      {
+        "type": "TEXT",
+        "name": "databaseId",
+        "displayName": "Database ID",
+        "simpleValueType": true,
+        "help": "ID of the Firestore database, e.g. \u003ci\u003emy-database\u003c/i\u003e. See the \u003ca href\u003d\"https://firebase.google.com/docs/firestore/manage-databases#database_id\"\u003edatabase ID rules\u003c/a\u003e:\n\u003cul\u003e\n\u003cli\u003eOnly lowercase letters, numbers and hyphens (\u003ci\u003e-\u003c/i\u003e).\u003c/li\u003e\n\u003cli\u003eStarts with a letter and ends with a letter or number.\u003c/li\u003e\n\u003cli\u003e4 to 63 characters.\u003c/li\u003e\n\u003cli\u003eMust not look like a UUID.\u003c/li\u003e\n\u003c/ul\u003e",
+        "enablingConditions": [
+          {
+            "paramName": "useCustomDatabase",
+            "paramValue": true,
+            "type": "EQUALS"
+          }
+        ],
+        "valueValidators": [
+          {
+            "type": "NON_EMPTY"
+          },
+          {
+            "type": "REGEX",
+            "args": [
+              "^(?![0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$)[a-z][a-z0-9-]{2,61}[a-z0-9]$"
+            ],
+            "errorMessage": "Invalid database ID. Use 4 to 63 lowercase letters, numbers or hyphens, starting with a letter and ending with a letter or number. It must not look like a UUID."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "CHECKBOX",
+    "name": "useTtl",
+    "checkboxText": "Add TTL field",
+    "simpleValueType": true,
+    "help": "Adds an expiration date field to the document, so Firestore can delete it automatically using a \u003ca href\u003d\"https://firebase.google.com/docs/firestore/ttl\"\u003eTTL (time-to-live) policy\u003c/a\u003e.\n\u003cbr/\u003e\u003cbr/\u003e\nThe field is written as a Firestore \u003cb\u003eTimestamp\u003c/b\u003e (\u003ci\u003eDate and time\u003c/i\u003e) value, set to the current time plus the \u003ci\u003eTTL value\u003c/i\u003e. The built-in \u003ci\u003eFirestore\u003c/i\u003e API can\u0027t write Timestamp values, so enabling this sends the request through the \u003ca href\u003d\"https://firebase.google.com/docs/firestore/use-rest-api\"\u003eFirestore REST API\u003c/a\u003e instead. It requires the \u003cb\u003eGCP Project ID\u003c/b\u003e field.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eImportant:\u003c/b\u003e\n\u003cul\u003e\n\u003cli\u003eCreate a TTL policy for this collection group and field name in the Google Cloud console. Without it, nothing is deleted.\u003c/li\u003e\n\u003cli\u003eExpired documents are typically deleted within 24 hours after their expiration date, not immediately.\u003c/li\u003e\n\u003cli\u003eDeleting a document via TTL doesn\u0027t delete its subcollections.\u003c/li\u003e\n\u003c/ul\u003e",
+    "subParams": [
+      {
+        "type": "TEXT",
+        "name": "ttlFieldName",
+        "displayName": "TTL field name",
+        "simpleValueType": true,
+        "help": "Name of the document field that stores the expiration date. It must match the field name of the TTL policy.\n\u003cbr/\u003e\u003cbr/\u003e\nUse letters, numbers and underscores only, not starting with a number. Names starting and ending with two underscores (e.g. \u003ci\u003e__name__\u003c/i\u003e) are reserved by Firestore.",
+        "enablingConditions": [
+          {
+            "paramName": "useTtl",
+            "paramValue": true,
+            "type": "EQUALS"
+          }
+        ],
+        "valueValidators": [
+          {
+            "type": "NON_EMPTY"
+          },
+          {
+            "type": "REGEX",
+            "args": [
+              "^(?!__.*__$)[A-Za-z_][A-Za-z0-9_]*$"
+            ],
+            "errorMessage": "Use letters, numbers and underscores only, not starting with a number. Names starting and ending with two underscores are reserved."
+          }
+        ],
+        "defaultValue": "expiresAt"
+      },
+      {
+        "type": "TEXT",
+        "name": "ttlValue",
+        "displayName": "TTL value (seconds)",
+        "simpleValueType": true,
+        "help": "Time, in \u003cb\u003eseconds\u003c/b\u003e, until the document expires, counted from when the tag fires. E.g. \u003ci\u003e86400\u003c/i\u003e \u003d 1 day, \u003ci\u003e2592000\u003c/i\u003e \u003d 30 days.\n\u003cbr/\u003e\u003cbr/\u003e\nMust be a whole number greater than 0.",
+        "enablingConditions": [
+          {
+            "paramName": "useTtl",
+            "paramValue": true,
+            "type": "EQUALS"
+          }
+        ],
+        "valueValidators": [
+          {
+            "type": "NON_EMPTY"
+          },
+          {
+            "type": "POSITIVE_NUMBER"
+          }
+        ]
       }
     ]
   },
@@ -85,40 +206,50 @@ ___TEMPLATE_PARAMETERS___
     "name": "addTimestamp",
     "checkboxText": "Add Timestamp",
     "simpleValueType": true,
-    "help": "This option will add the millisecond timestamp to the document."
+    "help": "Adds a field with the current time as a \u003cb\u003eUnix timestamp in milliseconds\u003c/b\u003e, e.g. \u003ci\u003e1760022083045\u003c/i\u003e.\n\u003cbr/\u003e\u003cbr/\u003e\n\u003cb\u003eNote:\u003c/b\u003e it\u0027s stored as a number, not as a Firestore Timestamp, so it can\u0027t be used by TTL policies. Use \u003ci\u003eAdd TTL field\u003c/i\u003e for that.",
+    "subParams": [
+      {
+        "type": "TEXT",
+        "name": "timestampFieldName",
+        "displayName": "Timestamp field name",
+        "simpleValueType": true,
+        "enablingConditions": [
+          {
+            "paramName": "addTimestamp",
+            "paramValue": true,
+            "type": "EQUALS"
+          }
+        ],
+        "valueValidators": [
+          {
+            "type": "NON_EMPTY"
+          },
+          {
+            "type": "REGEX",
+            "args": [
+              "^[A-Za-z0-9_]*$"
+            ],
+            "errorMessage": "Letters, numbers and underscores are allowed"
+          }
+        ],
+        "defaultValue": "timestamp",
+        "help": "Name of the field that stores the timestamp."
+      }
+    ]
   },
   {
     "type": "CHECKBOX",
     "name": "skipNilValues",
     "checkboxText": "Skip null or undefined values",
     "simpleValueType": true,
-    "help": "This option allows skipping items from customDataList with undefined or null values."
+    "help": "If checked, \u003ci\u003eCustom Data\u003c/i\u003e rows whose value is \u003ci\u003enull\u003c/i\u003e or \u003ci\u003eundefined\u003c/i\u003e are not written to the document.\n\u003cbr/\u003e\u003cbr/\u003e\nDoesn\u0027t apply to \u003ci\u003eEvent Data\u003c/i\u003e."
   },
   {
-    "type": "TEXT",
-    "name": "timestampFieldName",
-    "displayName": "Timestamp field name",
+    "type": "CHECKBOX",
+    "name": "useOptimisticScenario",
+    "checkboxText": "Use Optimistic Scenario",
     "simpleValueType": true,
-    "enablingConditions": [
-      {
-        "paramName": "addTimestamp",
-        "paramValue": true,
-        "type": "EQUALS"
-      }
-    ],
-    "valueValidators": [
-      {
-        "type": "NON_EMPTY"
-      },
-      {
-        "type": "REGEX",
-        "args": [
-          "^[A-Za-z0-9_]*$"
-        ],
-        "errorMessage": "Letters, numbers and underscores are allowed"
-      }
-    ],
-    "defaultValue": "timestamp"
+    "help": "The tag will call \u003ci\u003egtmOnSuccess()\u003c/i\u003e without waiting for the response from Firestore. This speeds up sGTM response time, but the tag reports success even if the write fails.\n\u003cbr/\u003e\u003cbr/\u003e\nConfiguration errors (e.g. a missing \u003cb\u003eGCP Project ID\u003c/b\u003e or an invalid \u003ci\u003eTTL value\u003c/i\u003e) still make the tag fail."
   },
   {
     "displayName": "Custom Data",
@@ -149,7 +280,9 @@ ___TEMPLATE_PARAMETERS___
           }
         ],
         "type": "SIMPLE_TABLE",
-        "newRowButtonText": "Add property"
+        "newRowButtonText": "Add property",
+        "help": "Fields to write to the document.\n\u003cbr/\u003e\u003cbr/\u003e\nUse dot notation in the \u003cb\u003eField Name\u003c/b\u003e to write nested fields.\n\u003cbr/\u003e\ne.g. \u003ci\u003euser.address.city\u003c/i\u003e",
+        "displayName": "Custom Data"
       }
     ]
   }
@@ -158,43 +291,300 @@ ___TEMPLATE_PARAMETERS___
 
 ___SANDBOXED_JS_FOR_SERVER___
 
+const encodeUriComponent = require('encodeUriComponent');
 const Firestore = require('Firestore');
 const getAllEventData = require('getAllEventData');
+const getGoogleAuth = require('getGoogleAuth');
+const getRequestHeader = require('getRequestHeader');
 const getTimestampMillis = require('getTimestampMillis');
 const getType = require('getType');
+const JSON = require('JSON');
+const logToConsole = require('logToConsole');
+const makeNumber = require('makeNumber');
+const makeString = require('makeString');
+const Math = require('Math');
+const Object = require('Object');
+const sendHttpRequest = require('sendHttpRequest');
 
-let input = data.addEventData ? getAllEventData() : {};
+/*==============================================================================
+==============================================================================*/
 
-let options = { merge: !!data.firebaseMerge };
-if (data.firebaseProjectIdOverride) options.projectId = data.firebaseProjectId;
+const eventData = getAllEventData();
 
-if (data.addTimestamp) input[data.timestampFieldName] = getTimestampMillis();
-if (data.customDataList) {
-  data.customDataList.forEach((d) => {
-    if (data.skipNilValues) {
-      const dType = getType(d.value);
-      if (dType === 'undefined' || dType === 'null') return;
-    }
-    if (getType(d.name) === 'string' && d.name.indexOf('.') !== -1) {
-      const nameParts = d.name.split('.');
-      let obj = input;
-      for (let i = 0; i < nameParts.length - 1; i++) {
-        const part = nameParts[i];
-        if (!obj[part]) {
-          obj[part] = {};
-        }
-        obj = obj[part];
-      }
-      obj[nameParts[nameParts.length - 1]] = d.value;
-    } else {
-      input[d.name] = d.value;
-    }
-  });
+if (shouldExitEarly(data, eventData)) return;
+
+const input = buildInput(data, eventData);
+
+// Firestore.write() can't write Timestamp values (needed for TTL) and only supports the default database.
+const shouldUseRestApi = data.useTtl || data.useCustomDatabase;
+if (shouldUseRestApi) {
+  const invalidReason = validateRestApiData(data);
+  if (invalidReason) {
+    log({
+      Name: 'FirestoreWriter',
+      Type: 'Message',
+      EventName: 'Write',
+      Message: '🛑 [ERROR] Document was not written.',
+      Reason: invalidReason
+    });
+
+    return data.gtmOnFailure();
+  }
 }
 
-Firestore.write(data.firebasePath, input, options).then((id) => {
-  data.gtmOnSuccess();
-}, data.gtmOnFailure);
+// Both APIs send a merge with no fields as a PATCH without updateMask, which would replace the whole document.
+const hasNoFieldsToMerge =
+  data.firebaseMerge &&
+  !data.useTtl &&
+  isDocumentPath(data.firebasePath) &&
+  Object.keys(input).length === 0;
+if (hasNoFieldsToMerge) {
+  log({
+    Name: 'FirestoreWriter',
+    Type: 'Message',
+    EventName: 'Write',
+    Message: '⚠️ [WARNING] Document was not written.',
+    Reason: 'Merge is enabled and there are no fields to write.'
+  });
+  return data.gtmOnSuccess();
+}
+
+if (shouldUseRestApi) {
+  writeWithRestApi(data, input);
+} else {
+  const options = { merge: !!data.firebaseMerge };
+  if (data.firebaseProjectIdOverride) {
+    options.projectId = data.firebaseProjectId;
+  }
+
+  Firestore.write(data.firebasePath, input, options).then(
+    () => {
+      if (!data.useOptimisticScenario) data.gtmOnSuccess();
+    },
+    () => {
+      if (!data.useOptimisticScenario) data.gtmOnFailure();
+    }
+  );
+}
+
+if (data.useOptimisticScenario) {
+  return data.gtmOnSuccess();
+}
+
+/*==============================================================================
+  Vendor related functions
+==============================================================================*/
+
+function buildInput(data, eventData) {
+  const input = data.addEventData ? eventData : {};
+
+  if (data.addTimestamp) input[data.timestampFieldName] = getTimestampMillis();
+  if (data.customDataList) {
+    data.customDataList.forEach((d) => {
+      if (data.skipNilValues) {
+        const dType = getType(d.value);
+        if (dType === 'undefined' || dType === 'null') return;
+      }
+      if (getType(d.name) === 'string' && d.name.indexOf('.') !== -1) {
+        const nameParts = d.name.split('.');
+        let obj = input;
+        for (let i = 0; i < nameParts.length - 1; i++) {
+          const part = nameParts[i];
+          if (!obj[part]) {
+            obj[part] = {};
+          }
+          obj = obj[part];
+        }
+        obj[nameParts[nameParts.length - 1]] = d.value;
+      } else {
+        input[d.name] = d.value;
+      }
+    });
+  }
+
+  return input;
+}
+
+function validateRestApiData(data) {
+  if (!data.firebaseProjectId) {
+    return 'GCP Project ID is required when TTL or a custom database is used.';
+  }
+  if (data.useCustomDatabase && !data.databaseId) {
+    return 'Database ID is required when a custom database is used.';
+  }
+  if (data.useTtl && !(makeNumber(data.ttlValue) > 0)) {
+    return 'TTL value must be a positive number. Value: ' + data.ttlValue;
+  }
+  // Firestore Timestamps can't be later than 9999-12-31T23:59:59.999999999Z.
+  if (data.useTtl && getTimestampMillis() + makeNumber(data.ttlValue) * 1000 > 253402300799999) {
+    return (
+      'TTL value is too large. The expiration date must be before the year 10000. Value: ' +
+      data.ttlValue
+    );
+  }
+}
+
+function writeWithRestApi(data, input) {
+  const path = makeString(data.firebasePath);
+  const fields = toFirestoreValue(input).mapValue.fields;
+
+  if (data.useTtl) {
+    const expiresAtMs = getTimestampMillis() + Math.round(makeNumber(data.ttlValue) * 1000);
+    fields[data.ttlFieldName || 'expiresAt'] = {
+      timestampValue: convertTimestampToISO(expiresAtMs)
+    };
+  }
+
+  let url =
+    'https://firestore.googleapis.com/v1/projects/' +
+    enc(data.firebaseProjectId) +
+    '/databases/' +
+    enc(data.useCustomDatabase ? data.databaseId : '(default)') +
+    '/documents/' +
+    path
+      .split('/')
+      .map((segment) => enc(segment))
+      .join('/');
+
+  // Collection paths create a document with an auto-generated ID.
+  const isCollectionPath = !isDocumentPath(path);
+  if (!isCollectionPath && data.firebaseMerge) {
+    url =
+      url +
+      '?' +
+      Object.keys(fields)
+        .map((key) => 'updateMask.fieldPaths=' + enc(quoteFieldPath(key)))
+        .join('&');
+  }
+
+  sendHttpRequest(
+    url,
+    {
+      method: isCollectionPath ? 'POST' : 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      authorization: getGoogleAuth({
+        scopes: ['https://www.googleapis.com/auth/datastore']
+      })
+    },
+    JSON.stringify({ fields: fields })
+  )
+    .then((result) => {
+      if (data.useOptimisticScenario) return;
+      if (result.statusCode >= 200 && result.statusCode < 300) data.gtmOnSuccess();
+      else data.gtmOnFailure();
+    })
+    .catch(() => {
+      if (!data.useOptimisticScenario) data.gtmOnFailure();
+    });
+}
+
+// Same type mapping as Firestore.write(), so data is stored identically in both modes.
+function toFirestoreValue(value) {
+  const type = getType(value);
+  if (type === 'boolean') return { booleanValue: value };
+  if (type === 'number') return { doubleValue: value };
+  if (type === 'string') return { stringValue: value };
+  if (type === 'array') return { arrayValue: { values: value.map(toFirestoreValue) } };
+  if (type === 'object') {
+    const fields = {};
+    Object.keys(value).forEach((key) => {
+      fields[key] = toFirestoreValue(value[key]);
+    });
+    return { mapValue: { fields: fields } };
+  }
+  return { nullValue: null };
+}
+
+// Field names that aren't "simple" (letters, digits and underscores, not starting with a digit) must be backtick-quoted,
+// with backslashes and backticks escaped.
+function quoteFieldPath(fieldName) {
+  const isSimpleName = fieldName.match('^[A-Za-z_][A-Za-z0-9_]*$');
+  if (isSimpleName) return fieldName;
+  return '`' + fieldName.split('\\').join('\\\\').split('`').join('\\`') + '`';
+}
+
+/*==============================================================================
+  Helpers
+==============================================================================*/
+
+function convertTimestampToISO(timestamp) {
+  const msPerDay = 86400000;
+  const isLeapYear = (y) => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+  const pad = (value, length) => {
+    let result = makeString(value);
+    while (result.length < length) result = '0' + result;
+    return result;
+  };
+
+  let days = Math.floor(timestamp / msPerDay);
+  let msOfDay = timestamp - days * msPerDay;
+
+  let year = 1970;
+  while (days >= (isLeapYear(year) ? 366 : 365)) {
+    days = days - (isLeapYear(year) ? 366 : 365);
+    year++;
+  }
+
+  const daysInMonth = [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  let month = 0;
+  while (days >= daysInMonth[month]) {
+    days = days - daysInMonth[month];
+    month++;
+  }
+
+  const hours = Math.floor(msOfDay / 3600000);
+  msOfDay = msOfDay - hours * 3600000;
+  const minutes = Math.floor(msOfDay / 60000);
+  msOfDay = msOfDay - minutes * 60000;
+  const seconds = Math.floor(msOfDay / 1000);
+  const milliseconds = msOfDay - seconds * 1000;
+
+  return (
+    year +
+    '-' +
+    pad(month + 1, 2) +
+    '-' +
+    pad(days + 1, 2) +
+    'T' +
+    pad(hours, 2) +
+    ':' +
+    pad(minutes, 2) +
+    ':' +
+    pad(seconds, 2) +
+    '.' +
+    pad(milliseconds, 3) +
+    'Z'
+  );
+}
+
+// Document paths have an even number of segments (collection/document), collection paths an odd one.
+function isDocumentPath(path) {
+  return makeString(path).split('/').length % 2 === 0;
+}
+
+function shouldExitEarly(data, eventData) {
+  const url = getUrl(eventData);
+  if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) {
+    data.gtmOnSuccess();
+    return true;
+  }
+
+  return false;
+}
+
+function getUrl(eventData) {
+  return eventData.page_location || getRequestHeader('referer') || eventData.page_referrer;
+}
+
+function enc(value) {
+  if (['null', 'undefined'].indexOf(getType(value)) !== -1) value = '';
+  return encodeUriComponent(makeString(value));
+}
+
+function log(rawDataToLog) {
+  rawDataToLog.TraceId = getRequestHeader('trace-id');
+  logToConsole(JSON.stringify(rawDataToLog));
+}
 
 
 ___SERVER_PERMISSIONS___
@@ -281,16 +671,656 @@ ___SERVER_PERMISSIONS___
       "isEditedByUser": true
     },
     "isRequired": true
+  },
+  {
+    "instance": {
+      "key": {
+        "publicId": "use_google_credentials",
+        "versionId": "1"
+      },
+      "param": [
+        {
+          "key": "allowedScopes",
+          "value": {
+            "type": 2,
+            "listItem": [
+              {
+                "type": 1,
+                "string": "https://www.googleapis.com/auth/datastore"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "clientAnnotations": {
+      "isEditedByUser": true
+    },
+    "isRequired": true
+  },
+  {
+    "instance": {
+      "key": {
+        "publicId": "send_http",
+        "versionId": "1"
+      },
+      "param": [
+        {
+          "key": "allowedUrls",
+          "value": {
+            "type": 1,
+            "string": "specific"
+          }
+        },
+        {
+          "key": "urls",
+          "value": {
+            "type": 2,
+            "listItem": [
+              {
+                "type": 1,
+                "string": "https://firestore.googleapis.com/*"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "clientAnnotations": {
+      "isEditedByUser": true
+    },
+    "isRequired": true
+  },
+  {
+    "instance": {
+      "key": {
+        "publicId": "logging",
+        "versionId": "1"
+      },
+      "param": [
+        {
+          "key": "environments",
+          "value": {
+            "type": 1,
+            "string": "all"
+          }
+        }
+      ]
+    },
+    "clientAnnotations": {
+      "isEditedByUser": true
+    },
+    "isRequired": true
+  },
+  {
+    "instance": {
+      "key": {
+        "publicId": "read_request",
+        "versionId": "1"
+      },
+      "param": [
+        {
+          "key": "headerWhitelist",
+          "value": {
+            "type": 2,
+            "listItem": [
+              {
+                "type": 3,
+                "mapKey": [
+                  {
+                    "type": 1,
+                    "string": "headerName"
+                  }
+                ],
+                "mapValue": [
+                  {
+                    "type": 1,
+                    "string": "trace-id"
+                  }
+                ]
+              },
+              {
+                "type": 3,
+                "mapKey": [
+                  {
+                    "type": 1,
+                    "string": "headerName"
+                  }
+                ],
+                "mapValue": [
+                  {
+                    "type": 1,
+                    "string": "referer"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "key": "headersAllowed",
+          "value": {
+            "type": 8,
+            "boolean": true
+          }
+        },
+        {
+          "key": "requestAccess",
+          "value": {
+            "type": 1,
+            "string": "specific"
+          }
+        },
+        {
+          "key": "headerAccess",
+          "value": {
+            "type": 1,
+            "string": "specific"
+          }
+        },
+        {
+          "key": "queryParameterAccess",
+          "value": {
+            "type": 1,
+            "string": "any"
+          }
+        }
+      ]
+    },
+    "clientAnnotations": {
+      "isEditedByUser": true
+    },
+    "isRequired": true
   }
 ]
 
 
 ___TESTS___
 
-scenarios: []
+scenarios:
+- name: '[Default mode] Writes event data, timestamp and custom data with the Firestore
+    API'
+  code: |-
+    const mockData = createMockData({
+      addEventData: true,
+      firebaseMerge: true,
+      firebaseProjectIdOverride: true,
+      firebaseProjectId: 'other-project',
+      addTimestamp: true,
+      customDataList: [
+        { name: 'value', value: 20 },
+        { name: 'user.address.city', value: 'Lisbon' },
+        { name: 'nullField', value: null }
+      ]
+    });
+
+    runCode(mockData);
+
+    callLater(() => {
+      assertThat(firestoreWriteArgs).isEqualTo({
+        path: 'events',
+        input: {
+          event_name: 'purchase',
+          value: 20,
+          timestamp: NOW,
+          user: { address: { city: 'Lisbon' } },
+          nullField: null
+        },
+        options: { merge: true, projectId: 'other-project' }
+      });
+      assertApi('sendHttpRequest').wasNotCalled();
+      assertApi('gtmOnSuccess').wasCalled();
+      assertApi('gtmOnFailure').wasNotCalled();
+    });
+- name: '[Default mode] Skips null and undefined custom data values when enabled'
+  code: |-
+    const mockData = createMockData({
+      skipNilValues: true,
+      customDataList: [
+        { name: 'kept', value: 'yes' },
+        { name: 'empty', value: '' },
+        { name: 'nullField', value: null },
+        { name: 'undefinedField', value: undefined }
+      ]
+    });
+
+    runCode(mockData);
+
+    callLater(() => {
+      assertThat(firestoreWriteArgs).isEqualTo({
+        path: 'events',
+        input: { kept: 'yes', empty: '' },
+        options: { merge: false }
+      });
+      assertApi('gtmOnSuccess').wasCalled();
+      assertApi('gtmOnFailure').wasNotCalled();
+    });
+- name: '[Default mode] Calls gtmOnFailure when the Firestore API write fails'
+  code: |-
+    mockObject('Firestore', {
+      write: () => Promise.create((resolve, reject) => reject({ reason: 'unknown' }))
+    });
+
+    runCode(createMockData({}));
+
+    callLater(() => {
+      assertApi('gtmOnSuccess').wasNotCalled();
+      assertApi('gtmOnFailure').wasCalled();
+    });
+- name: '[REST API] TTL enabled creates a document in the default database with POST
+    and a Timestamp field'
+  code: |-
+    const mockData = createMockData({
+      firebaseProjectId: 'my-project',
+      firebaseMerge: true,
+      databaseId: 'stale-db',
+      useTtl: true,
+      ttlValue: '86400',
+      customDataList: [{ name: 'orderId', value: 'abc' }]
+    });
+
+    mock('sendHttpRequest', (url, options, body) => {
+      assertThat(url).isEqualTo(restUrl('(default)', 'events'));
+      assertThat(options).isEqualTo({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        authorization: 'mockedGoogleAuth'
+      });
+      assertThat(JSON.parse(body)).isEqualTo({
+        fields: {
+          orderId: { stringValue: 'abc' },
+          expiresAt: { timestampValue: '2025-10-10T15:01:23.045Z' }
+        }
+      });
+      return Promise.create((resolve) => resolve({ statusCode: 200 }));
+    });
+
+    runCode(mockData);
+
+    callLater(() => {
+      assertApi('sendHttpRequest').wasCalled();
+      assertApi('getGoogleAuth').wasCalledWith({
+        scopes: ['https://www.googleapis.com/auth/datastore']
+      });
+      assertThat(firestoreWriteArgs).isUndefined();
+      assertApi('gtmOnSuccess').wasCalled();
+      assertApi('gtmOnFailure').wasNotCalled();
+    });
+- name: '[REST API] Custom database writes a document with PATCH and maps values like
+    the Firestore API'
+  code: |-
+    const mockData = createMockData({
+      firebasePath: 'users/id #1',
+      firebaseProjectId: 'my-project',
+      useCustomDatabase: true,
+      databaseId: 'analytics-db',
+      addEventData: true,
+      addTimestamp: true,
+      customDataList: [
+        { name: 'text', value: 'hello' },
+        { name: 'integer', value: 5 },
+        { name: 'decimal', value: 1.5 },
+        { name: 'flag', value: false },
+        { name: 'nullField', value: null },
+        { name: 'undefinedField', value: undefined },
+        { name: 'list', value: [1, 'a', { b: true }] },
+        { name: 'user.name', value: 'John' }
+      ]
+    });
+
+    mock('sendHttpRequest', (url, options, body) => {
+      assertThat(url).isEqualTo(restUrl('analytics-db', 'users/id%20%231'));
+      assertThat(options.method).isEqualTo('PATCH');
+      assertThat(JSON.parse(body)).isEqualTo({
+        fields: {
+          event_name: { stringValue: 'purchase' },
+          value: { doubleValue: 10 },
+          timestamp: { doubleValue: NOW },
+          text: { stringValue: 'hello' },
+          integer: { doubleValue: 5 },
+          decimal: { doubleValue: 1.5 },
+          flag: { booleanValue: false },
+          nullField: { nullValue: null },
+          undefinedField: { nullValue: null },
+          list: {
+            arrayValue: {
+              values: [
+                { doubleValue: 1 },
+                { stringValue: 'a' },
+                { mapValue: { fields: { b: { booleanValue: true } } } }
+              ]
+            }
+          },
+          user: { mapValue: { fields: { name: { stringValue: 'John' } } } }
+        }
+      });
+      return Promise.create((resolve) => resolve({ statusCode: 200 }));
+    });
+
+    runCode(mockData);
+
+    callLater(() => {
+      assertApi('sendHttpRequest').wasCalled();
+      assertThat(firestoreWriteArgs).isUndefined();
+      assertApi('gtmOnSuccess').wasCalled();
+      assertApi('gtmOnFailure').wasNotCalled();
+    });
+- name: '[REST API] Merge adds an updateMask with quoted and encoded top-level field
+    paths'
+  code: |-
+    const mockData = createMockData({
+      firebasePath: 'users/123/orders/abc',
+      firebaseProjectId: 'my-project',
+      firebaseMerge: true,
+      useTtl: true,
+      ttlFieldName: 'ttl_at',
+      ttlValue: '60',
+      customDataList: [
+        { name: 'simple', value: 1 },
+        { name: 'x-ga-id', value: 2 },
+        { name: 'with space', value: 3 },
+        { name: 'back`tick', value: 4 },
+        { name: 'back\\slash', value: 5 },
+        { name: 'nested.child', value: 6 }
+      ]
+    });
+
+    mock('sendHttpRequest', (url, options) => {
+      assertThat(url).isEqualTo(
+        restUrl('(default)', 'users/123/orders/abc') +
+          '?updateMask.fieldPaths=simple' +
+          '&updateMask.fieldPaths=%60x-ga-id%60' +
+          '&updateMask.fieldPaths=%60with%20space%60' +
+          '&updateMask.fieldPaths=%60back%5C%60tick%60' +
+          '&updateMask.fieldPaths=%60back%5C%5Cslash%60' +
+          '&updateMask.fieldPaths=nested' +
+          '&updateMask.fieldPaths=ttl_at'
+      );
+      assertThat(options.method).isEqualTo('PATCH');
+      return Promise.create((resolve) => resolve({ statusCode: 200 }));
+    });
+
+    runCode(mockData);
+
+    callLater(() => {
+      assertApi('sendHttpRequest').wasCalled();
+      assertApi('gtmOnSuccess').wasCalled();
+      assertApi('gtmOnFailure').wasNotCalled();
+    });
+- name: '[Merge] Skips the write to a document when there are no fields to merge,
+    in both modes'
+  code: |-
+    const emptyMerge = {
+      firebasePath: 'users/123',
+      firebaseProjectId: 'my-project',
+      firebaseMerge: true,
+      skipNilValues: true,
+      customDataList: [{ name: 'email', value: undefined }]
+    };
+    runCode(createMockData(emptyMerge));
+    emptyMerge.useCustomDatabase = true;
+    emptyMerge.databaseId = 'analytics-db';
+    runCode(createMockData(emptyMerge));
+
+    assertThat(firestoreWriteArgs).isUndefined();
+    assertApi('sendHttpRequest').wasNotCalled();
+    assertApi('gtmOnSuccess').wasCalled();
+    assertApi('gtmOnFailure').wasNotCalled();
+- name: '[Merge] Still writes with no input fields when the path is a collection or
+    TTL adds a field'
+  code: |-
+    runCode(createMockData({ firebasePath: 'events', firebaseMerge: true }));
+
+    mock('sendHttpRequest', (url) => {
+      assertThat(url).isEqualTo(restUrl('(default)', 'users/123') + '?updateMask.fieldPaths=expiresAt');
+      return Promise.create((resolve) => resolve({ statusCode: 200 }));
+    });
+    runCode(
+      createMockData({
+        firebasePath: 'users/123',
+        firebaseProjectId: 'my-project',
+        firebaseMerge: true,
+        useTtl: true,
+        ttlValue: '60'
+      })
+    );
+
+    callLater(() => {
+      assertThat(firestoreWriteArgs).isEqualTo({ path: 'events', input: {}, options: { merge: true } });
+      assertApi('sendHttpRequest').wasCalled();
+      assertApi('gtmOnSuccess').wasCalled();
+      assertApi('gtmOnFailure').wasNotCalled();
+    });
+- name: '[REST API] TTL field overrides a same-named field and falls back to expiresAt'
+  code: |-
+    const sentBodies = [];
+    mock('sendHttpRequest', (url, options, body) => {
+      sentBodies.push(JSON.parse(body));
+      return Promise.create((resolve) => resolve({ statusCode: 200 }));
+    });
+
+    runCode(
+      createMockData({
+        firebaseProjectId: 'my-project',
+        useTtl: true,
+        ttlFieldName: 'deleteAt',
+        ttlValue: '1.5',
+        customDataList: [{ name: 'deleteAt', value: 'not a timestamp' }]
+      })
+    );
+    runCode(
+      createMockData({
+        firebaseProjectId: 'my-project',
+        useTtl: true,
+        ttlFieldName: '',
+        ttlValue: 1
+      })
+    );
+
+    callLater(() => {
+      assertThat(sentBodies).isEqualTo([
+        { fields: { deleteAt: { timestampValue: '2025-10-09T15:01:24.545Z' } } },
+        { fields: { expiresAt: { timestampValue: '2025-10-09T15:01:24.045Z' } } }
+      ]);
+      assertApi('gtmOnSuccess').wasCalled();
+      assertApi('gtmOnFailure').wasNotCalled();
+    });
+- name: '[REST API] TTL expiration date is correct at day, leap year and year boundaries'
+  code: |-
+    const sentBodies = [];
+    mock('sendHttpRequest', (url, options, body) => {
+      sentBodies.push(JSON.parse(body).fields.expiresAt.timestampValue);
+      return Promise.create((resolve) => resolve({ statusCode: 200 }));
+    });
+
+    [
+      { now: 1709078400000, ttlValue: '86400' },
+      { now: 1735689599999, ttlValue: '1' },
+      { now: 4107499200000, ttlValue: '86400' },
+      { now: 0, ttlValue: '1' },
+      { now: 253402300798999, ttlValue: '1' }
+    ].forEach((scenario) => {
+      mock('getTimestampMillis', scenario.now);
+      runCode(
+        createMockData({
+          firebaseProjectId: 'my-project',
+          useTtl: true,
+          ttlValue: scenario.ttlValue
+        })
+      );
+    });
+
+    callLater(() => {
+      assertThat(sentBodies).isEqualTo([
+        '2024-02-29T00:00:00.000Z',
+        '2025-01-01T00:00:00.999Z',
+        '2100-03-01T12:00:00.000Z',
+        '1970-01-01T00:00:01.000Z',
+        '9999-12-31T23:59:59.999Z'
+      ]);
+      assertApi('gtmOnSuccess').wasCalled();
+      assertApi('gtmOnFailure').wasNotCalled();
+    });
+- name: '[Validation] Fails without sending a request when GCP Project ID or Database
+    ID is missing'
+  code: |-
+    [
+      { useTtl: true, ttlValue: '60' },
+      { useCustomDatabase: true, databaseId: 'analytics-db' },
+      { firebaseProjectId: 'my-project', useCustomDatabase: true, databaseId: '' },
+      { firebaseProjectId: 'my-project', useCustomDatabase: true, databaseId: undefined },
+      { firebasePath: 'users/123', firebaseMerge: true, useCustomDatabase: true, databaseId: 'analytics-db' }
+    ].forEach((overrides) => {
+      runCode(createMockData(overrides));
+    });
+
+    assertApi('sendHttpRequest').wasNotCalled();
+    assertThat(firestoreWriteArgs).isUndefined();
+    assertApi('gtmOnSuccess').wasNotCalled();
+    assertApi('gtmOnFailure').wasCalled();
+- name: '[Validation] Fails without sending a request when TTL value is not a positive
+    number or goes past the year 9999'
+  code: |-
+    ['0', '-5', 'abc', '', undefined, '1e30', '253402300799'].forEach((ttlValue) => {
+      runCode(
+        createMockData({
+          firebaseProjectId: 'my-project',
+          useTtl: true,
+          ttlValue: ttlValue
+        })
+      );
+    });
+
+    assertApi('sendHttpRequest').wasNotCalled();
+    assertThat(firestoreWriteArgs).isUndefined();
+    assertApi('gtmOnSuccess').wasNotCalled();
+    assertApi('gtmOnFailure').wasCalled();
+- name: '[REST API] Calls gtmOnFailure on non-2xx response or request failure'
+  code: |-
+    [
+      () => Promise.create((resolve) => resolve({ statusCode: 403, body: '{"error":{}}' })),
+      () => Promise.create((resolve, reject) => reject({ reason: 'failed' }))
+    ].forEach((sendHttpRequestMock) => {
+      mock('sendHttpRequest', sendHttpRequestMock);
+      runCode(
+        createMockData({
+          firebaseProjectId: 'my-project',
+          useCustomDatabase: true,
+          databaseId: 'analytics-db'
+        })
+      );
+    });
+
+    callLater(() => {
+      assertApi('sendHttpRequest').wasCalled();
+      assertApi('gtmOnSuccess').wasNotCalled();
+      assertApi('gtmOnFailure').wasCalled();
+    });
+- name: '[Early Exit] Does not write requests from gtm-msr'
+  code: |-
+    mock('getAllEventData', () => ({ page_location: 'https://gtm-msr.appspot.com/render?id=GTM-XXXX' }));
+    runCode(createMockData({}));
+
+    mock('getAllEventData', () => ({}));
+    mock('getRequestHeader', (name) => (name === 'referer' ? 'https://gtm-msr.appspot.com/' : undefined));
+    runCode(createMockData({ firebaseProjectId: 'my-project', useTtl: true, ttlValue: '60' }));
+
+    assertThat(firestoreWriteArgs).isUndefined();
+    assertApi('sendHttpRequest').wasNotCalled();
+    assertApi('gtmOnSuccess').wasCalled();
+    assertApi('gtmOnFailure').wasNotCalled();
+- name: '[Optimistic Scenario] Calls gtmOnSuccess immediately regardless of the write
+    result'
+  code: |-
+    const rejected = () => Promise.create((resolve, reject) => reject({ reason: 'failed' }));
+    mockObject('Firestore', { write: rejected });
+    runCode(createMockData({ useOptimisticScenario: true }));
+
+    const restMockData = createMockData({
+      useOptimisticScenario: true,
+      firebaseProjectId: 'my-project',
+      useTtl: true,
+      ttlValue: '60'
+    });
+    [
+      () => Promise.create((resolve) => resolve({ statusCode: 500 })),
+      rejected
+    ].forEach((sendHttpRequestMock) => {
+      mock('sendHttpRequest', sendHttpRequestMock);
+      runCode(restMockData);
+    });
+
+    // Asserted before the write promises settle.
+    assertApi('sendHttpRequest').wasCalled();
+    assertApi('gtmOnSuccess').wasCalled();
+    assertApi('gtmOnFailure').wasNotCalled();
+
+    callLater(() => {
+      assertApi('gtmOnFailure').wasNotCalled();
+    });
+- name: '[Optimistic Scenario] Still fails on invalid configuration'
+  code: |-
+    runCode(createMockData({ useOptimisticScenario: true, useTtl: true, ttlValue: '60' }));
+
+    assertApi('sendHttpRequest').wasNotCalled();
+    assertApi('gtmOnSuccess').wasNotCalled();
+    assertApi('gtmOnFailure').wasCalled();
+setup: |-
+  const JSON = require('JSON');
+  const Object = require('Object');
+  const Promise = require('Promise');
+  const callLater = require('callLater');
+
+  const NOW = 1760022083045; // 2025-10-09T15:01:23.045Z
+  mock('getTimestampMillis', NOW);
+  mock('getAllEventData', () => ({ event_name: 'purchase', value: 10 }));
+  mock('getGoogleAuth', () => 'mockedGoogleAuth');
+  mock('getRequestHeader', (name) => (name === 'trace-id' ? 'trace-id-123' : undefined));
+
+  let firestoreWriteArgs;
+  mockObject('Firestore', {
+    write: (path, input, options) => {
+      firestoreWriteArgs = { path: path, input: input, options: options };
+      return Promise.create((resolve) => resolve('documentId'));
+    }
+  });
+
+  const restUrl = (databaseId, path) =>
+    'https://firestore.googleapis.com/v1/projects/my-project/databases/' + databaseId + '/documents/' + path;
+
+  const createMockData = (overrides) => {
+    const mockData = {
+      firebasePath: 'events',
+      addEventData: false,
+      firebaseMerge: false,
+      firebaseProjectIdOverride: false,
+      firebaseProjectId: '',
+      useCustomDatabase: false,
+      databaseId: '',
+      useTtl: false,
+      ttlFieldName: 'expiresAt',
+      ttlValue: '',
+      addTimestamp: false,
+      skipNilValues: false,
+      timestampFieldName: 'timestamp',
+      customDataList: [],
+      useOptimisticScenario: false
+    };
+    Object.keys(overrides).forEach((key) => {
+      mockData[key] = overrides[key];
+    });
+    return mockData;
+  };
 
 
 ___NOTES___
+
+2026-10-09 - Change Notes:
+  - Add "Add TTL field" option (configurable field name, defaults to expiresAt; TTL value in seconds) that writes the expiration date as a Firestore Timestamp, so documents can be deleted by a Firestore TTL policy. Firestore.write() can't write Timestamp values, so this option writes through the Firestore REST API
+  - Add "Use custom database" option to write to a named Firestore database through the Firestore REST API, since Firestore.write() only supports the (default) database. The GCP Project ID (and the Database ID, for a custom database) is required when either REST option is enabled, and the tag fails with an error log on invalid configuration. With both options disabled, the tag still uses Firestore.write() as before
+  - Add "Use Optimistic Scenario" option and skip requests coming from gtm-msr.appspot.com
+  - Rename "Firebase Project ID" to "GCP Project ID", rewrite all help texts and nest dependent fields under their checkboxes
+  - Fix "Merge document keys" wiping a document when there are no fields to write: Firestore.write() sends that merge as a PATCH without updateMask, which replaces the whole document, so the write is now skipped in both modes. Add unit tests
 
 2026-05-25 Change Notes:
  - Logging removal.
