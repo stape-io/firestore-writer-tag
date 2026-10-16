@@ -1,6 +1,8 @@
 homepage: 'https://stape.io/'
 documentation: 'https://github.com/stape-io/firestore-writer-tag'
 versions:
+  - sha: 5236763e0b45f8f09991254d095834321ce65898
+    changeNotes: Added TTL field, custom database and optimistic scenario options.
   - sha: a88e2e75c10632d59fb7394be2ef6214f7c8ed31
     changeNotes: Logging removal.
   - sha: ea98946f76d74114bcd184bea9bb8ec56430e33c
